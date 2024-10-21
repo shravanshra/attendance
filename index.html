@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Attendance</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-gap: 10px;
+    }
+    .day {
+      width: 100px;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #ddd;
+    }
+    .present {
+      background-color: lightgreen;
+    }
+    .absent {
+      background-color: lightcoral;
+    }
+    .cl {
+      background-color: lightblue;
+    }
+    .lop {
+      background-color: lightyellow;
+    }
+  </style>
+</head>
+<body>
+  <h2>Employee Attendance System</h2>
+  <label for="empId">Enter Employee ID:</label>
+  <input type="text" id="empId">
+  <button onclick="fetchAttendance()">Get Attendance</button>
+  <div id="attendance-details"></div>
+  <h3>Attendance Calendar</h3>
+  <div class="calendar" id="calendar"></div>
+
+  <script>
+    function fetchAttendance() {
+      const empId = document.getElementById('empId').value;
+      
+      // Make the request to Google Sheets API to get employee attendance
+      fetch(`https://sheets.googleapis.com/v4/spreadsheets/YOUR_SHEET_ID/values/Sheet1?key=YOUR_API_KEY`)
+        .then(response => response.json())
+        .then(data => {
+          const rows = data.values;
+          const attendance = rows.find(row => row[0] === empId); // Assuming Employee ID is in column 0
+          
+          if (attendance) {
+            const present = attendance[1];
+            const absent = attendance[2];
+            const cl = attendance[3];
+            const lop = attendance[4];
+            const calendarData = attendance[5].split(","); // Assuming daily attendance is in column 5
+            
+            document.getElementById('attendance-details').innerHTML = `
+              <p>Present Days: ${present}</p>
+              <p>Absent Days: ${absent}</p>
+              <p>Casual Leaves: ${cl}</p>
+              <p>Loss of Pay (LOP): ${lop}</p>
+            `;
+            
+            generateCalendar(calendarData);
+          } else {
+            document.getElementById('attendance-details').innerHTML = "Employee ID not found!";
+          }
+        })
+        .catch(error => console.error('Error fetching data:', error));
+    }
+
+    function generateCalendar(calendarData) {
+      const calendarElement = document.getElementById('calendar');
+      calendarElement.innerHTML = ''; // Clear previous data
+
+      // Assuming the month has 30 days
+      for (let i = 0; i < calendarData.length; i++) {
+        const day = document.createElement('div');
+        day.className = 'day';
+
+        // Set the color based on attendance value
+        if (calendarData[i] === 'P') {
+          day.classList.add('present');
+        } else if (calendarData[i] === 'A') {
+          day.classList.add('absent');
+        } else if (calendarData[i] === 'CL') {
+          day.classList.add('cl');
+        } else if (calendarData[i] === 'LOP') {
+          day.classList.add('lop');
+        }
+        
+        day.textContent = i + 1; // Set day number
+        calendarElement.appendChild(day);
+      }
+    }
+  </script>
+</body>
+</html>
